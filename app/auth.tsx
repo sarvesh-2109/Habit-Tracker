@@ -1,9 +1,28 @@
 import { KeyboardAvoidingView, Platform, View, StyleSheet } from "react-native";
-import { Button, Text, TextInput } from "react-native-paper";
+import { Button, Text, TextInput, useTheme } from "react-native-paper";
 import { useState } from "react";
 
 export default function AuthScreen() {
   const [isSignup, setIsSignUp] = useState<boolean>(false);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string | null>("");
+
+  const theme = useTheme();
+
+  const handelAuth = async () => {
+    if (!email || !password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be atleast 6 characters long");
+      return;
+    }
+
+    setError(null);
+  };
 
   const handelSwitchMode = () => {
     setIsSignUp((prev) => !prev);
@@ -26,6 +45,7 @@ export default function AuthScreen() {
           placeholder="example@gmail.com"
           mode="outlined"
           style={styles.input}
+          onChangeText={setEmail}
         />
 
         <TextInput
@@ -34,9 +54,12 @@ export default function AuthScreen() {
           secureTextEntry
           mode="outlined"
           style={styles.input}
+          onChangeText={setPassword}
         />
 
-        <Button mode="contained" style={styles.button}>
+        {error && <Text style={{ color: theme.colors.error }}>{error}</Text>}
+
+        <Button mode="contained" style={styles.button} onPress={handelAuth}>
           {isSignup ? "Sign Up" : "Sign In"}
         </Button>
 
