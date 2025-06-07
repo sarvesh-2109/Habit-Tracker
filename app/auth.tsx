@@ -1,14 +1,19 @@
 import { KeyboardAvoidingView, Platform, View, StyleSheet } from "react-native";
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "expo-router";
 
 export default function AuthScreen() {
-  const [isSignup, setIsSignUp] = useState<boolean>(false);
+  const [isSignUp, setisSignUp] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>("");
 
   const theme = useTheme();
+  const router = useRouter();
+
+  const { signIn, signUp } = useAuth();
 
   const handelAuth = async () => {
     if (!email || !password) {
@@ -22,10 +27,26 @@ export default function AuthScreen() {
     }
 
     setError(null);
+
+    if (isSignUp) {
+      const error = await signUp(email, password);
+      if (error) {
+        setError(error);
+        return;
+      }
+    } else {
+      const error = await signIn(email, password);
+      if (error) {
+        setError(error);
+        return;
+      }
+
+      router.replace("/");
+    }
   };
 
   const handelSwitchMode = () => {
-    setIsSignUp((prev) => !prev);
+    setisSignUp((prev) => !prev);
   };
 
   return (
@@ -35,7 +56,7 @@ export default function AuthScreen() {
     >
       <View style={styles.content}>
         <Text style={styles.title} variant="headlineMedium">
-          {isSignup ? "Create Account" : "Welcome Back"}
+          {isSignUp ? "Create Account" : "Welcome Back"}
         </Text>
 
         <TextInput
@@ -60,7 +81,7 @@ export default function AuthScreen() {
         {error && <Text style={{ color: theme.colors.error }}>{error}</Text>}
 
         <Button mode="contained" style={styles.button} onPress={handelAuth}>
-          {isSignup ? "Sign Up" : "Sign In"}
+          {isSignUp ? "Sign Up" : "Sign In"}
         </Button>
 
         <Button
@@ -68,7 +89,7 @@ export default function AuthScreen() {
           onPress={handelSwitchMode}
           style={styles.switchButton}
         >
-          {isSignup
+          {isSignUp
             ? "Already have an account? Sign In"
             : "Don't have an account? Sign Up"}
         </Button>
