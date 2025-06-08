@@ -1,6 +1,16 @@
+import { DATABASE_ID, databases, HABITS_COLLECTION_ID } from "@/lib/appwrite";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { Button, SegmentedButtons, TextInput } from "react-native-paper";
+import { ID } from "react-native-appwrite";
+import {
+  Button,
+  SegmentedButtons,
+  TextInput,
+  useTheme,
+  Text,
+} from "react-native-paper";
 
 const FREQUENCIES = ["daily", "weekly", "monthly"];
 type Frequency = (typeof FREQUENCIES)[number];
@@ -9,6 +19,39 @@ export default function AddHabitScreen() {
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [frequency, setFrequency] = useState<string>("daily");
+  const [error, setError] = useState<string>("");
+  const { user } = useAuth();
+  const router = useRouter();
+  const theme = useTheme();
+
+  const handelSubmit = async () => {
+    if (!user) return;
+
+    try {
+      await databases.createDocument(
+        DATABASE_ID,
+        HABITS_COLLECTION_ID,
+        ID.unique(),
+        {
+          user_id: user.$id,
+          title,
+          description,
+          frequency,
+          streak_count: 0,
+          last_completed: new Date().toISOString(),
+          created_at: new Date().toTimeString(),
+        }
+      );
+
+      router.back();
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+        return;
+      }
+      setError("There was an error creating an habit");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -34,7 +77,14 @@ export default function AddHabitScreen() {
           }))}
         />
       </View>
-      <Button mode="contained" disabled={!title || !description}>Add Habit</Button>
+      <Button
+        mode="contained"
+        onPress={handelSubmit}
+        disabled={!title || !description}
+      >
+        Add Habit
+      </Button>
+      {error && <Text style={{ color: theme.colors.error }}>{error}</Text>}
     </View>
   );
 }
