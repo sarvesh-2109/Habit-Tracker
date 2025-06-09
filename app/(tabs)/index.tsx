@@ -132,7 +132,7 @@ export default function Index() {
               renderLeftActions={renderLeftActions}
               renderRightActions={renderRightActions}
               onSwipeableOpen={(direction) => {
-                if (direction === "left") {
+                if (direction === "right") {
                   handelDeleteHabit(habit.$id);
                 }
               }}
