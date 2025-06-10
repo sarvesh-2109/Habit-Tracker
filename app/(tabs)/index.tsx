@@ -14,7 +14,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Animated, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { ID, Query } from "react-native-appwrite";
 import { Swipeable } from "react-native-gesture-handler";
-import { Surface, Text } from "react-native-paper";
+import { Button, Surface, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
@@ -27,6 +27,13 @@ export default function Index() {
   const showTutorial = params.showTutorial === "true";
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+  const [lastAction, setLastAction] = useState<{
+    type: 'complete' | 'delete';
+    habitId: string;
+    habit?: Habit;
+  } | null>(null);
+  const undoFadeAnim = useRef(new Animated.Value(0)).current;
+  const undoSlideAnim = useRef(new Animated.Value(50)).current;
 
   const swipableRefs = useRef<{ [key: string]: Swipeable | null }>({});
 
@@ -155,18 +162,164 @@ export default function Index() {
     }
   };
 
+  const showUndoButton = (type: 'complete' | 'delete', habitId: string, habit?: Habit) => {
+    setLastAction({ type, habitId, habit });
+    Animated.parallel([
+      Animated.timing(undoFadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(undoSlideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Hide undo button after 5 seconds
+    setTimeout(() => {
+      hideUndoButton();
+    }, 5000);
+  };
+
+  const hideUndoButton = () => {
+    Animated.parallel([
+      Animated.timing(undoFadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(undoSlideAnim, {
+        toValue: 50,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setLastAction(null);
+    });
+  };
+
+  const handleUndo = async () => {
+    if (!lastAction || !user) return;
+
+    try {
+      if (lastAction.type === 'complete') {
+        // Find the most recent completion
+        const completions = await databases.listDocuments(
+          DATABASE_ID,
+          COMPLETIONS_COLLECTION_ID,
+          [
+            Query.equal("habit_id", lastAction.habitId),
+            Query.equal("user_id", user.$id),
+            Query.orderDesc("completed_at"),
+            Query.limit(1)
+          ]
+        );
+        
+        if (completions.documents.length > 0) {
+          const completion = completions.documents[0];
+          
+          // Verify the completion belongs to the current user
+          if (completion.user_id !== user.$id) {
+            throw new Error("You don't have permission to undo this action");
+          }
+
+          // Delete the completion
+          await databases.deleteDocument(
+            DATABASE_ID,
+            COMPLETIONS_COLLECTION_ID,
+            completion.$id
+          );
+
+          // Update the habit's streak count
+          if (lastAction.habit) {
+            // Verify the habit belongs to the current user
+            if (lastAction.habit.user_id !== user.$id) {
+              throw new Error("You don't have permission to update this habit");
+            }
+
+            await databases.updateDocument(
+              DATABASE_ID,
+              HABITS_COLLECTION_ID,
+              lastAction.habitId,
+              {
+                streak_count: Math.max(0, lastAction.habit.streak_count - 1),
+                last_completed: lastAction.habit.last_completed
+              }
+            );
+          }
+        }
+      } else if (lastAction.type === 'delete' && lastAction.habit) {
+        // Verify the habit belongs to the current user
+        if (lastAction.habit.user_id !== user.$id) {
+          throw new Error("You don't have permission to restore this habit");
+        }
+
+        // Restore the deleted habit with only the necessary fields
+        const habitData = {
+          user_id: lastAction.habit.user_id,
+          title: lastAction.habit.title,
+          description: lastAction.habit.description,
+          frequency: lastAction.habit.frequency,
+          streak_count: lastAction.habit.streak_count,
+          last_completed: lastAction.habit.last_completed,
+          created_at: lastAction.habit.created_at
+        };
+
+        await databases.createDocument(
+          DATABASE_ID,
+          HABITS_COLLECTION_ID,
+          ID.unique(),
+          habitData
+        );
+      }
+
+      // Refresh data
+      await Promise.all([
+        fetchHabits(),
+        fetchTodayCompletions()
+      ]);
+
+      hideUndoButton();
+    } catch (error) {
+      console.error("Error undoing action:", error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Failed to undo action. Please try again.");
+      }
+      hideUndoButton();
+    }
+  };
+
   const handelDeleteHabit = async (id: string) => {
     try {
+      const habit = habits.find(h => h.$id === id);
+      if (!habit) return;
+
+      // Store the habit data before deleting
+      const habitData = { ...habit };
       await databases.deleteDocument(DATABASE_ID, HABITS_COLLECTION_ID, id);
+      showUndoButton('delete', id, habitData);
     } catch (error) {
       console.error(error);
+      setError("Failed to delete habit. Please try again.");
     }
   };
 
   const handelCompleteHabit = async (id: string) => {
     if (!user || completedHabits?.includes(id)) return;
     try {
+      const habit = habits.find(h => h.$id === id);
+      if (!habit) return;
+
       const currentDate = new Date().toISOString();
+      
+      // Store the current habit state before updating
+      const habitData = { ...habit };
+      
+      // Create completion record
       await databases.createDocument(
         DATABASE_ID,
         COMPLETIONS_COLLECTION_ID,
@@ -177,15 +330,17 @@ export default function Index() {
           completed_at: currentDate,
         }
       );
-      const habit = habits?.find((h) => h.$id === id);
-      if (!habit) return;
 
+      // Update habit
       await databases.updateDocument(DATABASE_ID, HABITS_COLLECTION_ID, id, {
         streak_count: habit.streak_count + 1,
         last_completed: currentDate,
       });
+
+      showUndoButton('complete', id, habitData);
     } catch (error) {
       console.error(error);
+      setError("Failed to complete habit. Please try again.");
     }
   };
 
@@ -240,6 +395,31 @@ export default function Index() {
               <Text style={styles.tutorialText}>
                 Swipe right to complete, left to delete
               </Text>
+            </View>
+          </Animated.View>
+        )}
+
+        {lastAction && (
+          <Animated.View
+            style={[
+              styles.undoContainer,
+              {
+                opacity: undoFadeAnim,
+                transform: [{ translateY: undoSlideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.undoContent}>
+              <Text style={styles.undoText}>
+                {lastAction.type === 'complete' ? 'Habit completed' : 'Habit deleted'}
+              </Text>
+              <Button
+                mode="contained"
+                onPress={handleUndo}
+                style={styles.undoButton}
+              >
+                Undo
+              </Button>
             </View>
           </Animated.View>
         )}
@@ -460,5 +640,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#22223b',
     fontWeight: '500',
+  },
+  undoContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 16,
+    right: 16,
+    zIndex: 1000,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  undoContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  undoText: {
+    fontSize: 16,
+    color: '#22223b',
+    fontWeight: '500',
+  },
+  undoButton: {
+    marginLeft: 16,
+    borderRadius: 8,
   },
 });
