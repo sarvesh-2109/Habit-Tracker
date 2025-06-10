@@ -45,7 +45,10 @@ export default function AddHabitScreen() {
         }
       );
 
-      router.back();
+      router.replace({
+        pathname: "/",
+        params: { showTutorial: "true" }
+      });
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);

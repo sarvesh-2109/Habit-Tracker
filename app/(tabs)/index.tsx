@@ -1,16 +1,17 @@
 import {
-    client,
-    COMPLETIONS_COLLECTION_ID,
-    DATABASE_ID,
-    databases,
-    HABITS_COLLECTION_ID,
-    Realtimeresponse,
+  client,
+  COMPLETIONS_COLLECTION_ID,
+  DATABASE_ID,
+  databases,
+  HABITS_COLLECTION_ID,
+  Realtimeresponse,
 } from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth-context";
 import { Habit, HabitCompletion } from "@/types/database.type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Animated, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { ID, Query } from "react-native-appwrite";
 import { Swipeable } from "react-native-gesture-handler";
 import { Surface, Text } from "react-native-paper";
@@ -22,8 +23,47 @@ export default function Index() {
   const [completedHabits, setCompletedHabits] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const params = useLocalSearchParams();
+  const showTutorial = params.showTutorial === "true";
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
 
   const swipableRefs = useRef<{ [key: string]: Swipeable | null }>({});
+
+  useEffect(() => {
+    if (showTutorial) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Hide the tutorial after 5 seconds
+      const timer = setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: 50,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showTutorial]);
 
   useEffect(() => {
     if (user?.$id) {
@@ -184,6 +224,26 @@ export default function Index() {
             Today's Habits
           </Text>
         </View>
+
+        {showTutorial && (
+          <Animated.View
+            style={[
+              styles.tutorialContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.tutorialContent}>
+              <MaterialCommunityIcons name="gesture-swipe" size={24} color="#7c4dff" />
+              <Text style={styles.tutorialText}>
+                Swipe right to complete, left to delete
+              </Text>
+            </View>
+          </Animated.View>
+        )}
+
         <ScrollView showsVerticalScrollIndicator={false}>
           {loading ? (
             <Text>Loading habits...</Text>
@@ -368,5 +428,37 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     marginTop: 2,
     paddingRight: 16,
+  },
+  tutorialContainer: {
+    position: 'absolute',
+    top: 80,
+    left: 16,
+    right: 16,
+    zIndex: 1000,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  tutorialContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  tutorialText: {
+    fontSize: 16,
+    color: '#22223b',
+    fontWeight: '500',
   },
 });
