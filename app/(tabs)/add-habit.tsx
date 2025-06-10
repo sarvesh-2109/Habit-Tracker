@@ -12,6 +12,7 @@ import {
   TextInput,
   useTheme,
 } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const FREQUENCIES = ["daily", "weekly", "monthly"];
 type Frequency = (typeof FREQUENCIES)[number];
@@ -55,56 +56,68 @@ export default function AddHabitScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Surface style={styles.formContainer} elevation={4}>
-        <TextInput
-          label="Title"
-          mode="outlined"
-          onChangeText={setTitle}
-          style={styles.input}
-          theme={{ roundness: 12 }}
-        />
-        <TextInput
-          label="Description"
-          mode="outlined"
-          onChangeText={setDescription}
-          style={styles.input}
-          theme={{ roundness: 12 }}
-          multiline
-          numberOfLines={3}
-        />
-        <View style={styles.frequencyContainer}>
-          <Text style={styles.frequencyLabel}>Frequency</Text>
-          <SegmentedButtons
-            value={frequency}
-            onValueChange={(value) => setFrequency(value as Frequency)}
-            buttons={FREQUENCIES.map((freq) => ({
-              value: freq,
-              label: freq.charAt(0).toUpperCase() + freq.slice(1),
-            }))}
-            style={styles.segmentedButtons}
-          />
-        </View>
-        <Button
-          mode="contained"
-          onPress={handelSubmit}
-          disabled={!title || !description}
-          style={styles.submitButton}
-          contentStyle={styles.submitButtonContent}
-        >
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.title} variant="headlineSmall">
           Add Habit
-        </Button>
-        {error && <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>}
-      </Surface>
-    </View>
+        </Text>
+        <Surface style={styles.formContainer} elevation={4}>
+          <TextInput
+            label="Title"
+            mode="outlined"
+            onChangeText={setTitle}
+            style={styles.input}
+            theme={{ roundness: 12 }}
+          />
+          <TextInput
+            label="Description"
+            mode="outlined"
+            onChangeText={setDescription}
+            style={styles.input}
+            theme={{ roundness: 12 }}
+            multiline
+            numberOfLines={3}
+          />
+          <View style={styles.frequencyContainer}>
+            <Text style={styles.frequencyLabel}>Frequency</Text>
+            <SegmentedButtons
+              value={frequency}
+              onValueChange={(value) => setFrequency(value as Frequency)}
+              buttons={FREQUENCIES.map((freq) => ({
+                value: freq,
+                label: freq.charAt(0).toUpperCase() + freq.slice(1),
+              }))}
+              style={styles.segmentedButtons}
+            />
+          </View>
+          <Button
+            mode="contained"
+            onPress={handelSubmit}
+            disabled={!title || !description}
+            style={styles.submitButton}
+            contentStyle={styles.submitButtonContent}
+          >
+            Add Habit
+          </Button>
+          {error && <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>}
+        </Surface>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#f5f5f5",
+  },
+  title: {
+    fontWeight: "bold",
+    marginBottom: 16,
   },
   formContainer: {
     padding: 20,

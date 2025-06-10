@@ -14,6 +14,7 @@ import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import { ID, Query } from "react-native-appwrite";
 import { Swipeable } from "react-native-gesture-handler";
 import { Button, Surface, Text } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
   const { signOut, user } = useAuth();
@@ -176,93 +177,98 @@ export default function Index() {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text variant="headlineSmall" style={styles.title}>
-          Today's Habits
-        </Text>
-        <Button mode="text" onPress={signOut} icon={"logout"}>
-          Sign Out
-        </Button>
-      </View>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {loading ? (
-          <Text>Loading habits...</Text>
-        ) : error ? (
-          <Text>{error}</Text>
-        ) : habits.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              No habits yet. Add your first habit.
-            </Text>
-          </View>
-        ) : (
-          habits.map((habit, index) => (
-            <Swipeable
-              ref={(ref) => {
-                swipableRefs.current[habit.$id] = ref;
-              }}
-              key={habit.$id || index}
-              overshootLeft={false}
-              overshootRight={false}
-              renderLeftActions={() => renderLeftActions(habit.$id)}
-              renderRightActions={renderRightActions}
-              onSwipeableOpen={(direction) => {
-                if (direction === "right") {
-                  handelDeleteHabit(habit.$id);
-                } else if (direction === "left") {
-                  handelCompleteHabit(habit.$id);
-                }
-
-                swipableRefs.current[habit.$id]?.close();
-              }}
-            >
-              <Surface
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text variant="headlineSmall" style={styles.title}>
+            Today's Habits
+          </Text>
+          <Button mode="text" onPress={signOut} icon={"logout"}>
+            Sign Out
+          </Button>
+        </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {loading ? (
+            <Text>Loading habits...</Text>
+          ) : error ? (
+            <Text>{error}</Text>
+          ) : habits.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>
+                No habits yet. Add your first habit.
+              </Text>
+            </View>
+          ) : (
+            habits.map((habit, index) => (
+              <Swipeable
+                ref={(ref) => {
+                  swipableRefs.current[habit.$id] = ref;
+                }}
                 key={habit.$id || index}
-                style={[
-                  styles.card,
-                  isHabitCompleted(habit.$id) && styles.cardCompleted,
-                ]}
-                elevation={4} // Increased elevation for visible shadow
+                overshootLeft={false}
+                overshootRight={false}
+                renderLeftActions={() => renderLeftActions(habit.$id)}
+                renderRightActions={renderRightActions}
+                onSwipeableOpen={(direction) => {
+                  if (direction === "right") {
+                    handelDeleteHabit(habit.$id);
+                  } else if (direction === "left") {
+                    handelCompleteHabit(habit.$id);
+                  }
+
+                  swipableRefs.current[habit.$id]?.close();
+                }}
               >
-                <View style={styles.cardContent}>
-                  <Text style={styles.cardTitle}>{habit.title}</Text>
-                  <Text style={styles.cardDescription}>
-                    {habit.description}
-                  </Text>
-                  <View style={styles.cardFooter}>
-                    <View style={styles.streakBadge}>
-                      <MaterialCommunityIcons
-                        name="fire"
-                        size={18}
-                        color={"#ff9800"}
-                      />
-                      <Text style={styles.streakText}>
-                        {habit.streak_count} day streak
-                      </Text>
-                    </View>
-                    <View style={styles.frequencyBadge}>
-                      <Text style={styles.frequencyText}>
-                        {habit.frequency.charAt(0).toUpperCase() +
-                          habit.frequency.slice(1)}
-                      </Text>
+                <Surface
+                  key={habit.$id || index}
+                  style={[
+                    styles.card,
+                    isHabitCompleted(habit.$id) && styles.cardCompleted,
+                  ]}
+                  elevation={4} // Increased elevation for visible shadow
+                >
+                  <View style={styles.cardContent}>
+                    <Text style={styles.cardTitle}>{habit.title}</Text>
+                    <Text style={styles.cardDescription}>
+                      {habit.description}
+                    </Text>
+                    <View style={styles.cardFooter}>
+                      <View style={styles.streakBadge}>
+                        <MaterialCommunityIcons
+                          name="fire"
+                          size={18}
+                          color={"#ff9800"}
+                        />
+                        <Text style={styles.streakText}>
+                          {habit.streak_count} day streak
+                        </Text>
+                      </View>
+                      <View style={styles.frequencyBadge}>
+                        <Text style={styles.frequencyText}>
+                          {habit.frequency.charAt(0).toUpperCase() +
+                            habit.frequency.slice(1)}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              </Surface>
-            </Swipeable>
-          ))
-        )}
-      </ScrollView>
-    </View>
+                </Surface>
+              </Swipeable>
+            ))
+          )}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#f5f5f5",
   },
   header: {
     flexDirection: "row",
