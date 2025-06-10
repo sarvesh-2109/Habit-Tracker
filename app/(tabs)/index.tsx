@@ -1,7 +1,3 @@
-import { View, StyleSheet, Platform, ScrollView } from "react-native";
-import { Text, Button, Surface } from "react-native-paper";
-import { useAuth } from "@/lib/auth-context";
-import { ID, Query } from "react-native-appwrite";
 import {
   client,
   COMPLETIONS_COLLECTION_ID,
@@ -10,10 +6,14 @@ import {
   HABITS_COLLECTION_ID,
   Realtimeresponse,
 } from "@/lib/appwrite";
-import React, { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 import { Habit, HabitCompletion } from "@/types/database.type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import React, { useEffect, useRef, useState } from "react";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
+import { ID, Query } from "react-native-appwrite";
 import { Swipeable } from "react-native-gesture-handler";
+import { Button, Surface, Text } from "react-native-paper";
 
 export default function Index() {
   const { signOut, user } = useAuth();
@@ -282,12 +282,12 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: {
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
       },
       android: {
-        elevation: 4, // Handled by Surface, but kept for clarity
+        elevation: 2,
       },
     }),
   },

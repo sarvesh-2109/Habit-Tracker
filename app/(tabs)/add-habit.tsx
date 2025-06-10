@@ -2,14 +2,15 @@ import { DATABASE_ID, databases, HABITS_COLLECTION_ID } from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { ID } from "react-native-appwrite";
 import {
   Button,
   SegmentedButtons,
+  Surface,
+  Text,
   TextInput,
   useTheme,
-  Text,
 } from "react-native-paper";
 
 const FREQUENCIES = ["daily", "weekly", "monthly"];
@@ -55,36 +56,46 @@ export default function AddHabitScreen() {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        label="Title"
-        mode="outlined"
-        onChangeText={setTitle}
-        style={styles.input}
-      />
-      <TextInput
-        label="Description"
-        mode="outlined"
-        onChangeText={setDescription}
-        style={styles.input}
-      />
-      <View style={styles.frequencyContainer}>
-        <SegmentedButtons
-          value={frequency}
-          onValueChange={(value) => setFrequency(value as Frequency)}
-          buttons={FREQUENCIES.map((freq) => ({
-            value: freq,
-            label: freq.charAt(0).toUpperCase() + freq.slice(1),
-          }))}
+      <Surface style={styles.formContainer} elevation={4}>
+        <TextInput
+          label="Title"
+          mode="outlined"
+          onChangeText={setTitle}
+          style={styles.input}
+          theme={{ roundness: 12 }}
         />
-      </View>
-      <Button
-        mode="contained"
-        onPress={handelSubmit}
-        disabled={!title || !description}
-      >
-        Add Habit
-      </Button>
-      {error && <Text style={{ color: theme.colors.error }}>{error}</Text>}
+        <TextInput
+          label="Description"
+          mode="outlined"
+          onChangeText={setDescription}
+          style={styles.input}
+          theme={{ roundness: 12 }}
+          multiline
+          numberOfLines={3}
+        />
+        <View style={styles.frequencyContainer}>
+          <Text style={styles.frequencyLabel}>Frequency</Text>
+          <SegmentedButtons
+            value={frequency}
+            onValueChange={(value) => setFrequency(value as Frequency)}
+            buttons={FREQUENCIES.map((freq) => ({
+              value: freq,
+              label: freq.charAt(0).toUpperCase() + freq.slice(1),
+            }))}
+            style={styles.segmentedButtons}
+          />
+        </View>
+        <Button
+          mode="contained"
+          onPress={handelSubmit}
+          disabled={!title || !description}
+          style={styles.submitButton}
+          contentStyle={styles.submitButtonContent}
+        >
+          Add Habit
+        </Button>
+        {error && <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>}
+      </Surface>
     </View>
   );
 }
@@ -95,12 +106,48 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "#f5f5f5",
   },
-
+  formContainer: {
+    padding: 20,
+    borderRadius: 18,
+    backgroundColor: "#f7f2fa",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
   input: {
     marginBottom: 16,
+    backgroundColor: "#fff",
   },
-
   frequencyContainer: {
     marginBottom: 24,
+  },
+  frequencyLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+    color: "#22223b",
+  },
+  segmentedButtons: {
+    borderRadius: 12,
+  },
+  submitButton: {
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  submitButtonContent: {
+    paddingVertical: 8,
+  },
+  errorText: {
+    marginTop: 16,
+    textAlign: "center",
+    fontSize: 14,
   },
 });

@@ -1,7 +1,3 @@
-import { View, StyleSheet } from "react-native";
-import { useAuth } from "@/lib/auth-context";
-import { useState, useEffect } from "react";
-import { Habit, HabitCompletion } from "@/types/database.type";
 import {
   client,
   COMPLETIONS_COLLECTION_ID,
@@ -10,9 +6,13 @@ import {
   HABITS_COLLECTION_ID,
   Realtimeresponse,
 } from "@/lib/appwrite";
+import { useAuth } from "@/lib/auth-context";
+import { Habit, HabitCompletion } from "@/types/database.type";
+import { useEffect, useState } from "react";
+import { Platform, StyleSheet, View } from "react-native";
 import { Query } from "react-native-appwrite";
-import { Card, Text } from "react-native-paper";
 import { ScrollView } from "react-native-gesture-handler";
+import { Surface, Text } from "react-native-paper";
 
 export default function StreaksScreen() {
   const [habits, setHabits] = useState<Habit[]>([]); // Initialize with empty array
@@ -188,11 +188,12 @@ export default function StreaksScreen() {
           style={styles.container}
         >
           {rankedHabits.map(({ habit, streak, bestStreak, total }, key) => (
-            <Card
+            <Surface
               key={key}
               style={[styles.card, key === 0 && styles.firstCard]}
+              elevation={4}
             >
-              <Card.Content>
+              <View style={styles.cardContent}>
                 <Text variant="titleMedium" style={styles.habitTitle}>
                   {habit.title}
                 </Text>
@@ -211,8 +212,8 @@ export default function StreaksScreen() {
                     <Text style={styles.statLabel}>Total</Text>
                   </View>
                 </View>
-              </Card.Content>
-            </Card>
+              </View>
+            </Surface>
           ))}
         </ScrollView>
       )}
@@ -233,18 +234,25 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 18,
     borderRadius: 18,
-    backgroundColor: "#fff",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
+    backgroundColor: "#f7f2fa",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   firstCard: {
     borderWidth: 2,
     borderColor: "#7c4dff",
+  },
+  cardContent: {
+    padding: 20,
   },
   habitTitle: {
     fontWeight: "bold",
