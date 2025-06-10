@@ -10,6 +10,7 @@ export default function AuthScreen() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const theme = useTheme();
   const router = useRouter();
@@ -76,11 +77,17 @@ export default function AuthScreen() {
             <TextInput
               label="Password"
               autoCapitalize="none"
-              secureTextEntry
+              secureTextEntry={!showPassword}
               mode="outlined"
               style={styles.input}
               theme={{ roundness: 12 }}
               onChangeText={setPassword}
+              right={
+                <TextInput.Icon
+                  icon={showPassword ? "eye-off" : "eye"}
+                  onPress={() => setShowPassword(!showPassword)}
+                />
+              }
             />
 
             {error && <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>}
