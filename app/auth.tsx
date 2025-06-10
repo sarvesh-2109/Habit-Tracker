@@ -1,8 +1,9 @@
-import { KeyboardAvoidingView, Platform, View, StyleSheet } from "react-native";
-import { Button, Text, TextInput, useTheme } from "react-native-paper";
-import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "expo-router";
+import { useState } from "react";
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import { Button, Text, TextInput, useTheme } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AuthScreen() {
   const [isSignUp, setisSignUp] = useState<boolean>(false);
@@ -22,7 +23,7 @@ export default function AuthScreen() {
     }
 
     if (password.length < 6) {
-      setError("Password must be atleast 6 characters long");
+      setError("Password must be at least 6 characters long");
       return;
     }
 
@@ -50,58 +51,72 @@ export default function AuthScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "android" ? "padding" : "height"}
-      style={styles.container}
-    >
-      <View style={styles.content}>
-        <Text style={styles.title} variant="headlineMedium">
-          {isSignUp ? "Create Account" : "Welcome Back"}
-        </Text>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "android" ? "padding" : "height"}
+        style={styles.container}
+      >
+        <View style={styles.content}>
+          <Text style={styles.title} variant="headlineSmall">
+            {isSignUp ? "Create Account" : "Welcome Back"}
+          </Text>
 
-        <TextInput
-          label="Email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholder="example@gmail.com"
-          mode="outlined"
-          style={styles.input}
-          onChangeText={setEmail}
-        />
+          <View style={styles.formContainer}>
+            <TextInput
+              label="Email"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholder="example@gmail.com"
+              mode="outlined"
+              style={styles.input}
+              theme={{ roundness: 12 }}
+              onChangeText={setEmail}
+            />
 
-        <TextInput
-          label="Password"
-          autoCapitalize="none"
-          secureTextEntry
-          mode="outlined"
-          style={styles.input}
-          onChangeText={setPassword}
-        />
+            <TextInput
+              label="Password"
+              autoCapitalize="none"
+              secureTextEntry
+              mode="outlined"
+              style={styles.input}
+              theme={{ roundness: 12 }}
+              onChangeText={setPassword}
+            />
 
-        {error && <Text style={{ color: theme.colors.error }}>{error}</Text>}
+            {error && <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>}
 
-        <Button mode="contained" style={styles.button} onPress={handelAuth}>
-          {isSignUp ? "Sign Up" : "Sign In"}
-        </Button>
+            <Button
+              mode="contained"
+              style={styles.button}
+              contentStyle={styles.buttonContent}
+              onPress={handelAuth}
+            >
+              {isSignUp ? "Sign Up" : "Sign In"}
+            </Button>
 
-        <Button
-          mode="text"
-          onPress={handelSwitchMode}
-          style={styles.switchButton}
-        >
-          {isSignUp
-            ? "Already have an account? Sign In"
-            : "Don't have an account? Sign Up"}
-        </Button>
-      </View>
-    </KeyboardAvoidingView>
+            <Button
+              mode="text"
+              onPress={handelSwitchMode}
+              style={styles.switchButton}
+            >
+              {isSignUp
+                ? "Already have an account? Sign In"
+                : "Don't have an account? Sign Up"}
+            </Button>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+  },
+  container: {
+    flex: 1,
   },
   content: {
     flex: 1,
@@ -109,17 +124,42 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    textAlign: "center",
-    marginBottom: 24,
-    fontSize: 24,
     fontWeight: "bold",
+    marginBottom: 24,
+    textAlign: "center",
+    color: "#22223b",
+  },
+  formContainer: {
+    padding: 20,
+    borderRadius: 18,
+    backgroundColor: "#f7f2fa",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   input: {
     marginBottom: 16,
+    backgroundColor: "#fff",
   },
   button: {
     marginTop: 16,
+    borderRadius: 12,
+  },
+  buttonContent: {
     paddingVertical: 8,
+  },
+  errorText: {
+    marginTop: 16,
+    textAlign: "center",
+    fontSize: 14,
   },
   switchButton: {
     marginTop: 8,

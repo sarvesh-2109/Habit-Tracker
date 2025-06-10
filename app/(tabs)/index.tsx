@@ -1,10 +1,10 @@
 import {
-  client,
-  COMPLETIONS_COLLECTION_ID,
-  DATABASE_ID,
-  databases,
-  HABITS_COLLECTION_ID,
-  Realtimeresponse,
+    client,
+    COMPLETIONS_COLLECTION_ID,
+    DATABASE_ID,
+    databases,
+    HABITS_COLLECTION_ID,
+    Realtimeresponse,
 } from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth-context";
 import { Habit, HabitCompletion } from "@/types/database.type";
@@ -13,7 +13,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import { ID, Query } from "react-native-appwrite";
 import { Swipeable } from "react-native-gesture-handler";
-import { Button, Surface, Text } from "react-native-paper";
+import { Surface, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
@@ -183,9 +183,6 @@ export default function Index() {
           <Text variant="headlineSmall" style={styles.title}>
             Today's Habits
           </Text>
-          <Button mode="text" onPress={signOut} icon={"logout"}>
-            Sign Out
-          </Button>
         </View>
         <ScrollView showsVerticalScrollIndicator={false}>
           {loading ? (

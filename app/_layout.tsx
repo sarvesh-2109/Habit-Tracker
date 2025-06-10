@@ -39,6 +39,7 @@ export default function RootLayout() {
             <RouteGaurd>
               <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="auth" options={{ headerShown: false }} />
               </Stack>
             </RouteGaurd>
           </SafeAreaProvider>
