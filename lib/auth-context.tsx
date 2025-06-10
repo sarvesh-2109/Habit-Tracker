@@ -9,6 +9,7 @@ type AuthContextType = {
   signUp: (email: string, password: string) => Promise<string | null>;
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
+  updatePassword: (newPassword: string, currentPassword: string) => Promise<string | null>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoadingUser(false);
     }
   };
+
   const signUp = async (email: string, password: string) => {
     try {
       await account.create(ID.unique(), email, password);
@@ -44,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return error.message;
       }
 
-      return "An error occured during Signing Up";
+      return "An error occurred during Signing Up";
     }
   };
 
@@ -59,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return error.message;
       }
 
-      return "An error occured during Signing In";
+      return "An error occurred during Signing In";
     }
   };
 
@@ -72,9 +74,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updatePassword = async (newPassword: string, currentPassword: string) => {
+    try {
+      await account.updatePassword(newPassword, currentPassword);
+      return null;
+    } catch (error) {
+      if (error instanceof Error) {
+        return error.message;
+      }
+      return "An error occurred while updating the password";
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, isLoadingUser, signUp, signIn, signOut }}
+      value={{ user, isLoadingUser, signUp, signIn, signOut, updatePassword }}
     >
       {children}
     </AuthContext.Provider>

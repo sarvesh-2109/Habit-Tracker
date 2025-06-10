@@ -1,10 +1,12 @@
 import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { Avatar, Button, Divider, List, Surface, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
+  const router = useRouter();
 
   const getInitials = (email: string) => {
     return email.charAt(0).toUpperCase();
@@ -34,6 +36,7 @@ export default function ProfileScreen() {
               title="Account Settings"
               left={props => <List.Icon {...props} icon="account-cog" />}
               right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push("/update-password")}
             />
           </List.Section>
 
@@ -88,4 +91,4 @@ const styles = StyleSheet.create({
     margin: 16,
     borderColor: "#e53935",
   },
-}); 
+});
